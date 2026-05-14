@@ -1,0 +1,30 @@
+import { Colors, Fonts, FontSizes } from "@/constants/theme";
+import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function MenuScreen() {
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Menu</Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  title: {
+    fontFamily: Fonts.displayRegular,
+    fontSize: FontSizes["4xl"],
+    color: Colors.textPrimary,
+  },
+});
