@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronDown, Search } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 
 const CATEGORIES = ['Espresso', 'Filter', 'Cold', 'Pastries', 'Beans'];
@@ -40,6 +41,7 @@ const FEATURED = [
 ];
 
 export default function HomeScreen() {
+  const router = useRouter();
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
@@ -102,7 +104,7 @@ export default function HomeScreen() {
           contentContainerStyle={styles.productsRow}
         >
           {FEATURED.map((product) => (
-            <TouchableOpacity key={product.id} style={styles.productCard}>
+            <TouchableOpacity key={product.id} style={styles.productCard} onPress={() => router.push(`/product/${product.id}`)}>
               <Image source={{ uri: product.image }} style={styles.productImage} />
               <Text style={styles.productName}>{product.name}</Text>
               <Text style={styles.productPrice}>{product.price}</Text>

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, Coffee, MapPin, User } from 'lucide-react-native';
+import { Home, Coffee, MapPin, User, ShoppingBag } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes } from '@/constants/theme';
 
 export default function TabsLayout() {
@@ -35,6 +35,13 @@ export default function TabsLayout() {
         options={{
           title: 'MENU',
           tabBarIcon: ({ color, size }) => <Coffee color={color} size={size} strokeWidth={1.5} />,
+        }}
+      />
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: 'CART',
+          tabBarIcon: ({ color, size }) => <ShoppingBag color={color} size={size} strokeWidth={1.5} />,
         }}
       />
       <Tabs.Screen
