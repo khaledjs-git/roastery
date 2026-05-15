@@ -4,27 +4,51 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Minus, Plus } from 'lucide-react-native';
+import { ArrowLeft, Minus, Plus, Check } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useCartStore } from '@/stores/cartStore';
-import { getProduct, SIZES } from '@/data/catalog';
+import {
+  getProduct,
+  SIZES,
+  resolveImage,
+  STRENGTH_BASE_OPTIONS,
+  MILK_OPTIONS,
+  FLAVOR_OPTIONS,
+  APPAREL_SIZES,
+  EXTRA_SHOT_PRICE,
+  MAX_EXTRA_SHOTS,
+  FLAVOR_PRICE,
+  type Flavor,
+  type Milk,
+} from '@/data/catalog';
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
 
+  const product = getProduct(id);
+
   const [selectedSize, setSelectedSize] = useState('Medium');
   const [quantity, setQuantity] = useState(1);
   const [busy, setBusy] = useState(false);
 
-  const product = getProduct(id);
+  // Drink customization state
+  const [strengthBase, setStrengthBase] = useState('Regular');
+  const [extraShots, setExtraShots] = useState(0);
+  const [milk, setMilk] = useState<Milk>('Regular');
+  const [flavors, setFlavors] = useState<Flavor[]>([]);
+  const [notes, setNotes] = useState('');
+
+  // Apparel size state
+  const [apparelSize, setApparelSize] = useState('M');
 
   if (!product) {
     return (
@@ -34,27 +58,52 @@ export default function ProductDetail() {
     );
   }
 
+  const isDrink = product.category === 'drinks';
+  const isApparel = product.category === 'merch' && product.isApparel === true;
+
   const sizeData = product.hasSizes
     ? SIZES.find((s) => s.label === selectedSize)!
     : { label: 'One Size', priceModifier: 0 };
 
-  const unitPrice = product.basePrice + sizeData.priceModifier;
+  // Price = base + size + extra shots + flavors
+  const shotsCost = isDrink ? extraShots * EXTRA_SHOT_PRICE : 0;
+  const flavorsCost = isDrink ? flavors.length * FLAVOR_PRICE : 0;
+  const unitPrice =
+    product.basePrice + sizeData.priceModifier + shotsCost + flavorsCost;
   const totalPrice = unitPrice * quantity;
+
+  const toggleFlavor = (f: Flavor) => {
+    Haptics.selectionAsync();
+    setFlavors((prev) =>
+      prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
+    );
+  };
 
   const handleAdd = () => {
     if (busy) return;
     setBusy(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const base = {
+      id: product.id,
+      name: product.name,
+      price: unitPrice,
+      size: sizeData.label,
+      image: product.image,
+      ...(isDrink && {
+        strengthBase,
+        extraShots,
+        ...(product.isMilkBased && { milk }),
+        flavors,
+        notes: notes.trim(),
+      }),
+      ...(isApparel && { apparelSize }),
+    };
+
     for (let i = 0; i < quantity; i++) {
-      addItem({
-        id: product.id,
-        name: product.name,
-        price: unitPrice,
-        size: sizeData.label,
-        image: product.image,
-      });
+      addItem(base);
     }
-    // Auto-navigate back. The persistent cart bar IS the confirmation.
+
     setTimeout(() => {
       if (router.canGoBack()) {
         router.back();
@@ -66,34 +115,43 @@ export default function ProductDetail() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ArrowLeft size={22} color={Colors.textPrimary} strokeWidth={1.5} />
         </TouchableOpacity>
 
         <View style={styles.imageWrap}>
-          <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
+          <Image
+            source={resolveImage(product.image)}
+            style={styles.image}
+            resizeMode="cover"
+          />
         </View>
 
         <View style={styles.content}>
           <Text style={styles.name}>{product.name}</Text>
           <Text style={styles.description}>{product.description}</Text>
 
+          {/* SIZE (drinks with sizes) */}
           {product.hasSizes && (
             <>
               <Text style={styles.sectionLabel}>SIZE</Text>
-              <View style={styles.sizesRow}>
+              <View style={styles.pillRow}>
                 {SIZES.map((s) => {
                   const active = selectedSize === s.label;
                   return (
                     <TouchableOpacity
                       key={s.label}
-                      onPress={() => setSelectedSize(s.label)}
-                      style={[styles.sizePill, active && styles.sizePillActive]}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setSelectedSize(s.label);
+                      }}
+                      style={[styles.pill, active && styles.pillActive]}
                       activeOpacity={0.85}
                     >
-                      <Text style={[styles.sizeText, active && styles.sizeTextActive]}>
+                      <Text style={[styles.pillText, active && styles.pillTextActive]}>
                         {s.label}
+                        {s.priceModifier > 0 ? `  +${s.priceModifier.toFixed(3)}` : ''}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -102,6 +160,171 @@ export default function ProductDetail() {
             </>
           )}
 
+          {/* STRENGTH (all drinks) */}
+          {isDrink && (
+            <>
+              <Text style={styles.sectionLabel}>STRENGTH</Text>
+              <View style={styles.pillRow}>
+                {STRENGTH_BASE_OPTIONS.map((s) => {
+                  const active = strengthBase === s;
+                  return (
+                    <TouchableOpacity
+                      key={s}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setStrengthBase(s);
+                      }}
+                      style={[styles.pill, active && styles.pillActive]}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                        {s}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* EXTRA SHOTS stepper */}
+              <View style={styles.shotRow}>
+                <View>
+                  <Text style={styles.shotLabel}>Extra shot</Text>
+                  <Text style={styles.shotSub}>
+                    +{EXTRA_SHOT_PRICE.toFixed(3)} KD each · max {MAX_EXTRA_SHOTS}
+                  </Text>
+                </View>
+                <View style={styles.shotStepper}>
+                  <TouchableOpacity
+                    style={styles.qtyButton}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setExtraShots(Math.max(0, extraShots - 1));
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Minus size={16} color={Colors.textPrimary} strokeWidth={1.5} />
+                  </TouchableOpacity>
+                  <Text style={styles.shotCount}>{extraShots}</Text>
+                  <TouchableOpacity
+                    style={styles.qtyButton}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setExtraShots(Math.min(MAX_EXTRA_SHOTS, extraShots + 1));
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Plus size={16} color={Colors.textPrimary} strokeWidth={1.5} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </>
+          )}
+
+          {/* MILK (milk-based drinks only) */}
+          {isDrink && product.isMilkBased && (
+            <>
+              <Text style={styles.sectionLabel}>MILK</Text>
+              <View style={styles.pillRow}>
+                {MILK_OPTIONS.map((m) => {
+                  const active = milk === m;
+                  return (
+                    <TouchableOpacity
+                      key={m}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setMilk(m);
+                      }}
+                      style={[styles.pill, active && styles.pillActive]}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                        {m}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
+          {/* FLAVORS (all drinks, multi-select) */}
+          {isDrink && (
+            <>
+              <Text style={styles.sectionLabel}>
+                FLAVORS  ·  +{FLAVOR_PRICE.toFixed(3)} EACH
+              </Text>
+              <View style={styles.pillRow}>
+                {FLAVOR_OPTIONS.map((f) => {
+                  const active = flavors.includes(f);
+                  return (
+                    <TouchableOpacity
+                      key={f}
+                      onPress={() => toggleFlavor(f)}
+                      style={[styles.pill, active && styles.pillActive]}
+                      activeOpacity={0.85}
+                    >
+                      {active && (
+                        <Check
+                          size={14}
+                          color={Colors.white}
+                          strokeWidth={2.5}
+                          style={{ marginRight: 6 }}
+                        />
+                      )}
+                      <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                        {f}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
+          {/* SPECIAL INSTRUCTIONS (all drinks) */}
+          {isDrink && (
+            <>
+              <Text style={styles.sectionLabel}>SPECIAL INSTRUCTIONS</Text>
+              <TextInput
+                style={styles.notesInput}
+                placeholder="e.g. extra hot, light foam, no sugar"
+                placeholderTextColor={Colors.textTertiary}
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                maxLength={140}
+              />
+            </>
+          )}
+
+          {/* APPAREL SIZE */}
+          {isApparel && (
+            <>
+              <Text style={styles.sectionLabel}>SIZE</Text>
+              <View style={styles.pillRow}>
+                {APPAREL_SIZES.map((s) => {
+                  const active = apparelSize === s;
+                  return (
+                    <TouchableOpacity
+                      key={s}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setApparelSize(s);
+                      }}
+                      style={[styles.pill, active && styles.pillActive]}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                        {s}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
+          {/* QUANTITY */}
           <Text style={styles.sectionLabel}>QUANTITY</Text>
           <View style={styles.quantityRow}>
             <TouchableOpacity
@@ -162,13 +385,13 @@ const styles = StyleSheet.create({
   },
   imageWrap: {
     width: '100%',
-    height: 420,
+    height: 380,
     backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   image: { width: '100%', height: '100%' },
-  content: { padding: Spacing.lg },
+  content: { padding: Spacing.lg, paddingBottom: Spacing['2xl'] },
   name: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes['3xl'],
@@ -186,28 +409,82 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontFamily: Fonts.medium,
     fontSize: 11,
-    letterSpacing: 3,
+    letterSpacing: 2,
     color: Colors.textSecondary,
     marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
   },
-  sizesRow: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.xl },
-  sizePill: {
+  pillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: 10,
     borderRadius: Radius.full,
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  sizePillActive: {
+  pillActive: {
     borderColor: Colors.accent,
     backgroundColor: Colors.accent,
   },
-  sizeText: {
+  pillText: {
     fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
     color: Colors.textPrimary,
   },
-  sizeTextActive: { color: Colors.white },
+  pillTextActive: { color: Colors.white },
+  shotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  shotLabel: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.base,
+    color: Colors.textPrimary,
+  },
+  shotSub: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  shotStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  shotCount: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.base,
+    color: Colors.textPrimary,
+    minWidth: 20,
+    textAlign: 'center',
+  },
+  notesInput: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.base,
+    color: Colors.textPrimary,
+    minHeight: 70,
+    textAlignVertical: 'top',
+    marginBottom: Spacing.lg,
+  },
   quantityRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -217,7 +494,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   qtyButton: {
     width: 40,

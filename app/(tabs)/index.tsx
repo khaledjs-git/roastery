@@ -131,7 +131,7 @@ export default function HomeScreen() {
               onPress={() => router.push(`/product/${product.id}`)}
               activeOpacity={0.85}
             >
-              <Image source={{ uri: product.image }} style={styles.productImage} />
+              <Image source={resolveImage(product.image)} style={styles.productImage} />
               <Text style={styles.productName}>{product.name}</Text>
               <Text style={styles.productPrice}>{product.price}</Text>
             </TouchableOpacity>
@@ -328,3 +328,4 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
 });
+import { resolveImage } from '@/data/catalog';

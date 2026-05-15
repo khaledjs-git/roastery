@@ -11,19 +11,37 @@ import { useRouter } from 'expo-router';
 import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useCartStore, CartItem } from '@/stores/cartStore';
+import { resolveImage } from '@/data/catalog';
+
+// Build a human-readable customization summary for a cart line.
+function describeItem(item: CartItem): string {
+  const parts: string[] = [];
+
+  if (item.size && item.size !== 'One Size') parts.push(item.size);
+  if (item.apparelSize) parts.push(`Size ${item.apparelSize}`);
+  if (item.strengthBase && item.strengthBase !== 'Regular')
+    parts.push(item.strengthBase);
+  if (item.extraShots && item.extraShots > 0)
+    parts.push(`${item.extraShots} extra shot${item.extraShots > 1 ? 's' : ''}`);
+  if (item.milk && item.milk !== 'Regular') parts.push(`${item.milk} milk`);
+  if (item.flavors && item.flavors.length > 0)
+    parts.push(item.flavors.join(', '));
+
+  return parts.join(' · ');
+}
 
 export default function CartScreen() {
   const router = useRouter();
   const items = useCartStore((s) => s.items);
-  const increaseQuantity = useCartStore((s) => s.increaseQuantity);
-  const decreaseQuantity = useCartStore((s) => s.decreaseQuantity);
-  const removeItem = useCartStore((s) => s.removeItem);
+  const increaseByKey = useCartStore((s) => s.increaseByKey);
+  const decreaseByKey = useCartStore((s) => s.decreaseByKey);
+  const removeItemByKey = useCartStore((s) => s.removeItemByKey);
+  const keyFor = useCartStore((s) => s.keyFor);
   const totalPrice = useCartStore((s) => s.totalPrice);
   const totalItems = useCartStore((s) => s.totalItems());
 
   const subtotal = totalPrice();
-  const tax = 0;
-  const total = subtotal + tax;
+  const total = subtotal;
 
   if (items.length === 0) {
     return (
@@ -49,41 +67,48 @@ export default function CartScreen() {
     );
   }
 
-  const renderItem = ({ item }: { item: CartItem }) => (
-    <View style={styles.cartItem}>
-      <Image source={{ uri: item.image }} style={styles.itemImage} />
-      <View style={styles.itemDetails}>
-        <Text style={styles.itemName}>{item.name}</Text>
-        <Text style={styles.itemSize}>{item.size}</Text>
-        <Text style={styles.itemPrice}>
-          {(item.price * item.quantity).toFixed(3)} KD
-        </Text>
-      </View>
-      <View style={styles.itemControls}>
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => removeItem(item.id, item.size)}
-        >
-          <Trash2 size={16} color={Colors.textTertiary} strokeWidth={1.5} />
-        </TouchableOpacity>
-        <View style={styles.quantityRow}>
+  const renderItem = ({ item }: { item: CartItem }) => {
+    const key = keyFor(item);
+    const summary = describeItem(item);
+    return (
+      <View style={styles.cartItem}>
+        <Image source={resolveImage(item.image)} style={styles.itemImage} />
+        <View style={styles.itemDetails}>
+          <Text style={styles.itemName}>{item.name}</Text>
+          {summary ? <Text style={styles.itemSize}>{summary}</Text> : null}
+          {item.notes ? (
+            <Text style={styles.itemNotes}>“{item.notes}”</Text>
+          ) : null}
+          <Text style={styles.itemPrice}>
+            {(item.price * item.quantity).toFixed(3)} KD
+          </Text>
+        </View>
+        <View style={styles.itemControls}>
           <TouchableOpacity
-            style={styles.qtyButton}
-            onPress={() => decreaseQuantity(item.id, item.size)}
+            style={styles.removeButton}
+            onPress={() => removeItemByKey(key)}
           >
-            <Minus size={14} color={Colors.textPrimary} strokeWidth={1.5} />
+            <Trash2 size={16} color={Colors.textTertiary} strokeWidth={1.5} />
           </TouchableOpacity>
-          <Text style={styles.qtyText}>{item.quantity}</Text>
-          <TouchableOpacity
-            style={styles.qtyButton}
-            onPress={() => increaseQuantity(item.id, item.size)}
-          >
-            <Plus size={14} color={Colors.textPrimary} strokeWidth={1.5} />
-          </TouchableOpacity>
+          <View style={styles.quantityRow}>
+            <TouchableOpacity
+              style={styles.qtyButton}
+              onPress={() => decreaseByKey(key)}
+            >
+              <Minus size={14} color={Colors.textPrimary} strokeWidth={1.5} />
+            </TouchableOpacity>
+            <Text style={styles.qtyText}>{item.quantity}</Text>
+            <TouchableOpacity
+              style={styles.qtyButton}
+              onPress={() => increaseByKey(key)}
+            >
+              <Plus size={14} color={Colors.textPrimary} strokeWidth={1.5} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -95,7 +120,7 @@ export default function CartScreen() {
       <FlatList
         data={items}
         renderItem={renderItem}
-        keyExtractor={(item) => `${item.id}-${item.size}`}
+        keyExtractor={(item) => keyFor(item)}
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
@@ -114,9 +139,7 @@ export default function CartScreen() {
           onPress={() => router.push('/checkout')}
           activeOpacity={0.85}
         >
-          <Text style={styles.checkoutButtonText}>
-            PROCEED TO CHECKOUT
-          </Text>
+          <Text style={styles.checkoutButtonText}>PROCEED TO CHECKOUT</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -175,7 +198,11 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   list: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md },
-  separator: { height: 1, backgroundColor: Colors.border, marginVertical: Spacing.md },
+  separator: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.md,
+  },
   cartItem: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
   itemImage: {
     width: 72,
@@ -188,12 +215,20 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.base,
     color: Colors.textPrimary,
-    marginBottom: 2,
+    marginBottom: 3,
   },
   itemSize: {
     fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
+    marginBottom: 3,
+    lineHeight: 18,
+  },
+  itemNotes: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.sm,
+    color: Colors.textTertiary,
+    fontStyle: 'italic',
     marginBottom: Spacing.sm,
   },
   itemPrice: {

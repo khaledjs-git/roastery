@@ -16,6 +16,7 @@ import {
   Product,
   ProductCategory,
   getProductsByCategory,
+  resolveImage,
 } from '@/data/catalog';
 import { useCartStore } from '@/stores/cartStore';
 import { CartBar } from '@/components/CartBar';
@@ -101,7 +102,7 @@ export default function MenuScreen() {
               activeOpacity={0.7}
             >
               <View style={styles.imageWrap}>
-                <Image source={{ uri: p.image }} style={styles.rowImage} />
+                <Image source={resolveImage(p.image)} style={styles.rowImage} />
                 {qty > 0 && (
                   <View style={styles.qtyBadge}>
                     <Text style={styles.qtyBadgeText}>{qty}</Text>
