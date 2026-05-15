@@ -9,54 +9,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Minus, Plus } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useCartStore } from '@/stores/cartStore';
-
-const CATALOG: Record<
-  string,
-  { id: string; name: string; description: string; basePrice: number; image: string }
-> = {
-  '1': {
-    id: '1',
-    name: 'Iced Latte',
-    description:
-      'A smooth blend of double-shot espresso poured over cold milk and ice. Refreshing, balanced, and perfect for warm Kuwait afternoons.',
-    basePrice: 1.5,
-    image: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=900',
-  },
-  '2': {
-    id: '2',
-    name: 'Flat White',
-    description:
-      'Velvety microfoam over a double ristretto. Less foam, more coffee — for the purist.',
-    basePrice: 1.25,
-    image: 'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?w=900',
-  },
-  '3': {
-    id: '3',
-    name: 'Cortado',
-    description:
-      'Equal parts espresso and warm milk. Bold, balanced, Spanish-style.',
-    basePrice: 1.25,
-    image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=900',
-  },
-  '4': {
-    id: '4',
-    name: 'V60 Pour Over',
-    description:
-      'Hand-poured filter coffee using a Hario V60. Bright, clean, and crafted for the moment.',
-    basePrice: 2.0,
-    image: 'https://images.unsplash.com/photo-1610889556528-9a770e32642f?w=900',
-  },
-};
-
-const SIZES = [
-  { label: 'Small', priceModifier: 0 },
-  { label: 'Medium', priceModifier: 0.25 },
-  { label: 'Large', priceModifier: 0.5 },
-];
+import { getProduct, SIZES } from '@/data/catalog';
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -64,8 +21,9 @@ export default function ProductDetail() {
   const addItem = useCartStore((s) => s.addItem);
 
   const [selectedSize, setSelectedSize] = useState('Medium');
+  const [quantity, setQuantity] = useState(1);
 
-  const product = CATALOG[id];
+  const product = getProduct(id);
 
   if (!product) {
     return (
@@ -75,18 +33,24 @@ export default function ProductDetail() {
     );
   }
 
-  const sizeData = SIZES.find((s) => s.label === selectedSize)!;
-  const finalPrice = product.basePrice + sizeData.priceModifier;
+  const sizeData = product.hasSizes
+    ? SIZES.find((s) => s.label === selectedSize)!
+    : { label: 'One Size', priceModifier: 0 };
+
+  const unitPrice = product.basePrice + sizeData.priceModifier;
+  const totalPrice = unitPrice * quantity;
 
   const handleAdd = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: finalPrice,
-      size: selectedSize,
-      image: product.image,
-    });
+    for (let i = 0; i < quantity; i++) {
+      addItem({
+        id: product.id,
+        name: product.name,
+        price: unitPrice,
+        size: sizeData.label,
+        image: product.image,
+      });
+    }
   };
 
   return (
@@ -104,23 +68,46 @@ export default function ProductDetail() {
           <Text style={styles.name}>{product.name}</Text>
           <Text style={styles.description}>{product.description}</Text>
 
-          <Text style={styles.sectionLabel}>SIZE</Text>
-          <View style={styles.sizesRow}>
-            {SIZES.map((s) => {
-              const active = selectedSize === s.label;
-              return (
-                <TouchableOpacity
-                  key={s.label}
-                  onPress={() => setSelectedSize(s.label)}
-                  style={[styles.sizePill, active && styles.sizePillActive]}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.sizeText, active && styles.sizeTextActive]}>
-                    {s.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+          {product.hasSizes && (
+            <>
+              <Text style={styles.sectionLabel}>SIZE</Text>
+              <View style={styles.sizesRow}>
+                {SIZES.map((s) => {
+                  const active = selectedSize === s.label;
+                  return (
+                    <TouchableOpacity
+                      key={s.label}
+                      onPress={() => setSelectedSize(s.label)}
+                      style={[styles.sizePill, active && styles.sizePillActive]}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.sizeText, active && styles.sizeTextActive]}>
+                        {s.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
+          <Text style={styles.sectionLabel}>QUANTITY</Text>
+          <View style={styles.quantityRow}>
+            <TouchableOpacity
+              style={styles.qtyButton}
+              onPress={() => setQuantity(Math.max(1, quantity - 1))}
+              activeOpacity={0.7}
+            >
+              <Minus size={18} color={Colors.textPrimary} strokeWidth={1.5} />
+            </TouchableOpacity>
+            <Text style={styles.qtyText}>{quantity}</Text>
+            <TouchableOpacity
+              style={styles.qtyButton}
+              onPress={() => setQuantity(quantity + 1)}
+              activeOpacity={0.7}
+            >
+              <Plus size={18} color={Colors.textPrimary} strokeWidth={1.5} />
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -132,7 +119,7 @@ export default function ProductDetail() {
           activeOpacity={0.85}
         >
           <Text style={styles.addButtonText}>
-            Add to cart · {finalPrice.toFixed(3)} KD
+            Add to cart · {totalPrice.toFixed(3)} KD
           </Text>
         </TouchableOpacity>
       </View>
@@ -209,6 +196,28 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   sizeTextActive: { color: Colors.white },
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  qtyButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.lg,
+    color: Colors.textPrimary,
+  },
   bottomBar: {
     padding: Spacing.lg,
     borderTopWidth: 1,
