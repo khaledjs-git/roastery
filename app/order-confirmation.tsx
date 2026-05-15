@@ -14,7 +14,6 @@ export default function OrderConfirmationScreen() {
   }>();
   const clearCart = useCartStore((s) => s.clearCart);
 
-  // Clear the cart once the order is "placed"
   useEffect(() => {
     clearCart();
   }, [clearCart]);
@@ -23,7 +22,7 @@ export default function OrderConfirmationScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.iconCircle}>
-          <Check size={48} color={Colors.white} strokeWidth={2} />
+          <Check size={44} color={Colors.white} strokeWidth={2.2} />
         </View>
 
         <Text style={styles.title}>Order placed</Text>
@@ -57,6 +56,7 @@ export default function OrderConfirmationScreen() {
         <TouchableOpacity
           style={styles.homeButton}
           onPress={() => router.replace('/(tabs)')}
+          activeOpacity={0.85}
         >
           <Text style={styles.homeButtonText}>BACK TO HOME</Text>
         </TouchableOpacity>
@@ -74,31 +74,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: Colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.xl,
   },
   title: {
-    fontFamily: Fonts.displayRegular,
-    fontSize: FontSizes['4xl'],
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes['3xl'],
     color: Colors.textPrimary,
     marginBottom: Spacing.sm,
+    letterSpacing: -0.4,
   },
   subtitle: {
-    fontFamily: Fonts.bodyLight,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.base,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing['2xl'],
-    lineHeight: 24,
+    lineHeight: 22,
   },
   detailsCard: {
     width: '100%',
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -109,21 +111,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
   },
   detailLabel: {
-    fontFamily: Fonts.bodyRegular,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
   },
   detailValue: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes.sm,
     color: Colors.textPrimary,
   },
   divider: { height: 1, backgroundColor: Colors.border },
   note: {
-    fontFamily: Fonts.bodyLight,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     color: Colors.textTertiary,
     textAlign: 'center',
@@ -137,13 +139,13 @@ const styles = StyleSheet.create({
   },
   homeButton: {
     backgroundColor: Colors.accent,
-    paddingVertical: Spacing.md + 2,
+    paddingVertical: 16,
     borderRadius: Radius.full,
     alignItems: 'center',
   },
   homeButtonText: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: FontSizes.sm,
+    fontFamily: Fonts.semiBold,
+    fontSize: 12,
     letterSpacing: 2,
     color: Colors.white,
   },

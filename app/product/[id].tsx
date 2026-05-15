@@ -14,7 +14,6 @@ import * as Haptics from 'expo-haptics';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useCartStore } from '@/stores/cartStore';
 
-// Placeholder catalog — will come from Firebase in Phase 4
 const CATALOG: Record<
   string,
   { id: string; name: string; description: string; basePrice: number; image: string }
@@ -65,7 +64,6 @@ export default function ProductDetail() {
   const addItem = useCartStore((s) => s.addItem);
 
   const [selectedSize, setSelectedSize] = useState('Medium');
-  const [justAdded, setJustAdded] = useState(false);
 
   const product = CATALOG[id];
 
@@ -81,6 +79,7 @@ export default function ProductDetail() {
   const finalPrice = product.basePrice + sizeData.priceModifier;
 
   const handleAdd = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     addItem({
       id: product.id,
       name: product.name,
@@ -88,22 +87,21 @@ export default function ProductDetail() {
       size: selectedSize,
       image: product.image,
     });
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 1500);
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.textPrimary} strokeWidth={1.5} />
+          <ArrowLeft size={22} color={Colors.textPrimary} strokeWidth={1.5} />
         </TouchableOpacity>
 
-        <Image source={{ uri: product.image }} style={styles.image} />
+        <View style={styles.imageWrap}>
+          <Image source={{ uri: product.image }} style={styles.image} />
+        </View>
 
         <View style={styles.content}>
           <Text style={styles.name}>{product.name}</Text>
-          <Text style={styles.price}>{finalPrice.toFixed(3)} KD</Text>
           <Text style={styles.description}>{product.description}</Text>
 
           <Text style={styles.sectionLabel}>SIZE</Text>
@@ -115,6 +113,7 @@ export default function ProductDetail() {
                   key={s.label}
                   onPress={() => setSelectedSize(s.label)}
                   style={[styles.sizePill, active && styles.sizePillActive]}
+                  activeOpacity={0.85}
                 >
                   <Text style={[styles.sizeText, active && styles.sizeTextActive]}>
                     {s.label}
@@ -128,18 +127,13 @@ export default function ProductDetail() {
 
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={[styles.addButton, justAdded && styles.addButtonAdded]}
+          style={styles.addButton}
           onPress={handleAdd}
-          disabled={justAdded}
+          activeOpacity={0.85}
         >
-          {justAdded ? (
-            <View style={styles.addedContent}>
-              <Check size={18} color={Colors.white} strokeWidth={2} />
-              <Text style={styles.addButtonText}>ADDED</Text>
-            </View>
-          ) : (
-            <Text style={styles.addButtonText}>ADD TO CART</Text>
-          )}
+          <Text style={styles.addButtonText}>
+            Add to cart · {finalPrice.toFixed(3)} KD
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -149,7 +143,7 @@ export default function ProductDetail() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Colors.background },
   notFound: {
-    fontFamily: Fonts.bodyRegular,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.base,
     color: Colors.textSecondary,
     textAlign: 'center',
@@ -167,30 +161,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  image: { width: '100%', height: 380, backgroundColor: Colors.surface },
+  imageWrap: {
+    width: '100%',
+    height: 420,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  image: { width: '100%', height: '100%' },
   content: { padding: Spacing.lg },
   name: {
-    fontFamily: Fonts.displayRegular,
-    fontSize: FontSizes['4xl'],
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes['3xl'],
     color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
-  },
-  price: {
-    fontFamily: Fonts.bodyMedium,
-    fontSize: FontSizes.xl,
-    color: Colors.accent,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
+    letterSpacing: -0.4,
   },
   description: {
-    fontFamily: Fonts.bodyLight,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.base,
     color: Colors.textSecondary,
     lineHeight: 24,
     marginBottom: Spacing.xl,
   },
   sectionLabel: {
-    fontFamily: Fonts.bodyMedium,
-    fontSize: FontSizes.xs,
+    fontFamily: Fonts.medium,
+    fontSize: 11,
     letterSpacing: 3,
     color: Colors.textSecondary,
     marginBottom: Spacing.md,
@@ -198,7 +194,7 @@ const styles = StyleSheet.create({
   sizesRow: { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.xl },
   sizePill: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: 10,
     borderRadius: Radius.full,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -208,7 +204,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
   },
   sizeText: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
     color: Colors.textPrimary,
   },
@@ -221,20 +217,14 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: Colors.accent,
-    paddingVertical: Spacing.md + 2,
+    paddingVertical: 16,
     borderRadius: Radius.full,
     alignItems: 'center',
   },
-  addButtonAdded: { backgroundColor: Colors.success },
   addButtonText: {
-    fontFamily: Fonts.bodySemiBold,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes.sm,
-    letterSpacing: 2,
+    letterSpacing: 1,
     color: Colors.white,
-  },
-  addedContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
   },
 });

@@ -1,24 +1,16 @@
+import { Stack } from 'expo-router';
+import { useFonts } from 'expo-font';
 import {
   Inter_300Light,
   Inter_400Regular,
   Inter_500Medium,
   Inter_600SemiBold,
   Inter_700Bold,
-} from "@expo-google-fonts/inter";
-import {
-  PlayfairDisplay_400Regular,
-  PlayfairDisplay_500Medium,
-  PlayfairDisplay_700Bold,
-} from "@expo-google-fonts/playfair-display";
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+} from '@expo-google-fonts/inter';
 
 export default function RootLayout() {
-  // Load all our custom fonts. The app waits to render until they're ready.
+  // Single-font system. Apple-feel typography.
   const [fontsLoaded] = useFonts({
-    PlayfairDisplay_400Regular,
-    PlayfairDisplay_500Medium,
-    PlayfairDisplay_700Bold,
     Inter_300Light,
     Inter_400Regular,
     Inter_500Medium,
@@ -26,7 +18,6 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
-  // While fonts are loading, render nothing (prevents text flash).
   if (!fontsLoaded) {
     return null;
   }

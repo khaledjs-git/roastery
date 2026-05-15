@@ -1,6 +1,46 @@
+import { useEffect, useRef } from 'react';
 import { Tabs } from 'expo-router';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Home, Coffee, MapPin, User, ShoppingBag } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes } from '@/constants/theme';
+import { useCartStore } from '@/stores/cartStore';
+
+function CartIconWithBadge({ color, size }: { color: string; size: number }) {
+  const count = useCartStore((s) => s.totalItems());
+  const pulseCounter = useCartStore((s) => s.pulseCounter);
+
+  const scale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (pulseCounter === 0) return;
+    // Spring bounce: quick scale up, settle back to 1
+    Animated.sequence([
+      Animated.spring(scale, {
+        toValue: 1.35,
+        useNativeDriver: true,
+        friction: 4,
+        tension: 200,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 5,
+        tension: 180,
+      }),
+    ]).start();
+  }, [pulseCounter, scale]);
+
+  return (
+    <Animated.View style={[styles.iconWrap, { transform: [{ scale }] }]}>
+      <ShoppingBag color={color} size={size} strokeWidth={1.5} />
+      {count > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{count > 9 ? '9+' : count}</Text>
+        </View>
+      )}
+    </Animated.View>
+  );
+}
 
 export default function TabsLayout() {
   return (
@@ -17,9 +57,9 @@ export default function TabsLayout() {
           paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontFamily: Fonts.bodyMedium,
-          fontSize: FontSizes.xs,
-          letterSpacing: 1,
+          fontFamily: Fonts.medium,
+          fontSize: 10,
+          letterSpacing: 1.5,
         },
       }}
     >
@@ -40,8 +80,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="cart"
         options={{
-          title: 'CART',
-          tabBarIcon: ({ color, size }) => <ShoppingBag color={color} size={size} strokeWidth={1.5} />,
+          title: 'ORDER',
+          tabBarIcon: ({ color, size }) => <CartIconWithBadge color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -61,3 +101,32 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconWrap: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -10,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.background,
+  },
+  badgeText: {
+    color: Colors.white,
+    fontFamily: Fonts.bold,
+    fontSize: 11,
+    lineHeight: 13,
+  },
+});

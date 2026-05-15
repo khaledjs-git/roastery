@@ -15,5 +15,5 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Colors.background },
   container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontFamily: Fonts.displayRegular, fontSize: FontSizes['4xl'], color: Colors.textPrimary },
+  title: { fontFamily: Fonts.bold, fontSize: FontSizes['4xl'], color: Colors.textPrimary },
 });

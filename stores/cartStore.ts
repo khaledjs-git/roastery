@@ -11,6 +11,7 @@ export type CartItem = {
 
 type CartState = {
   items: CartItem[];
+  pulseCounter: number; // increments on every addItem → triggers cart icon animation
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
   removeItem: (id: string, size: string) => void;
   increaseQuantity: (id: string, size: string) => void;
@@ -22,6 +23,7 @@ type CartState = {
 
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
+  pulseCounter: 0,
 
   addItem: (newItem) => {
     set((state) => {
@@ -35,9 +37,13 @@ export const useCartStore = create<CartState>((set, get) => ({
               ? { ...i, quantity: i.quantity + 1 }
               : i
           ),
+          pulseCounter: state.pulseCounter + 1,
         };
       }
-      return { items: [...state.items, { ...newItem, quantity: 1 }] };
+      return {
+        items: [...state.items, { ...newItem, quantity: 1 }],
+        pulseCounter: state.pulseCounter + 1,
+      };
     });
   },
 

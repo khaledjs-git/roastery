@@ -57,7 +57,7 @@ export default function CheckoutScreen() {
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color={Colors.textPrimary} strokeWidth={1.5} />
+            <ArrowLeft size={22} color={Colors.textPrimary} strokeWidth={1.5} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Checkout</Text>
           <View style={{ width: 40 }} />
@@ -69,13 +69,13 @@ export default function CheckoutScreen() {
         >
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <MapPin size={18} color={Colors.accent} strokeWidth={1.5} />
+              <MapPin size={16} color={Colors.accent} strokeWidth={1.5} />
               <Text style={styles.sectionTitle}>Pickup location</Text>
             </View>
             <View style={styles.card}>
-              <Text style={styles.cardTitle}>Roastery — Kuwait City</Text>
+              <Text style={styles.cardTitle}>Roastery — Salmiya</Text>
               <Text style={styles.cardSubtitle}>
-                Block 7, Salem Al Mubarak Street, Salmiya
+                Block 7, Salem Al Mubarak Street
               </Text>
               <Text style={styles.cardMeta}>Open · 7:00 AM – 11:00 PM</Text>
             </View>
@@ -83,7 +83,7 @@ export default function CheckoutScreen() {
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Clock size={18} color={Colors.accent} strokeWidth={1.5} />
+              <Clock size={16} color={Colors.accent} strokeWidth={1.5} />
               <Text style={styles.sectionTitle}>Pickup time</Text>
             </View>
             <View style={styles.pillsRow}>
@@ -94,6 +94,7 @@ export default function CheckoutScreen() {
                     key={time}
                     style={[styles.pill, active && styles.pillActive]}
                     onPress={() => setSelectedTime(time)}
+                    activeOpacity={0.85}
                   >
                     <Text style={[styles.pillText, active && styles.pillTextActive]}>
                       {time}
@@ -105,7 +106,7 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Order notes</Text>
+            <Text style={styles.sectionTitleStandalone}>Order notes</Text>
             <TextInput
               style={styles.notesInput}
               placeholder="Add a note for the barista (optional)"
@@ -119,7 +120,7 @@ export default function CheckoutScreen() {
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <CreditCard size={18} color={Colors.accent} strokeWidth={1.5} />
+              <CreditCard size={16} color={Colors.accent} strokeWidth={1.5} />
               <Text style={styles.sectionTitle}>Payment</Text>
             </View>
             <View style={styles.card}>
@@ -131,7 +132,7 @@ export default function CheckoutScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Order summary</Text>
+            <Text style={styles.sectionTitleStandalone}>Order summary</Text>
             <View style={styles.summaryCard}>
               {items.map((item) => (
                 <View key={`${item.id}-${item.size}`} style={styles.summaryItem}>
@@ -154,8 +155,14 @@ export default function CheckoutScreen() {
         </ScrollView>
 
         <View style={styles.bottomBar}>
-          <TouchableOpacity style={styles.placeOrderButton} onPress={handlePlaceOrder}>
-            <Text style={styles.placeOrderText}>PLACE ORDER · {total.toFixed(3)} KD</Text>
+          <TouchableOpacity
+            style={styles.placeOrderButton}
+            onPress={handlePlaceOrder}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.placeOrderText}>
+              PLACE ORDER · {total.toFixed(3)} KD
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -172,12 +179,12 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   emptyText: {
-    fontFamily: Fonts.bodyRegular,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.base,
     color: Colors.textSecondary,
   },
   linkText: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
     color: Colors.accent,
   },
@@ -192,8 +199,8 @@ const styles = StyleSheet.create({
   },
   backButton: { width: 40, height: 40, justifyContent: 'center' },
   headerTitle: {
-    fontFamily: Fonts.displayRegular,
-    fontSize: FontSizes.xl,
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.lg,
     color: Colors.textPrimary,
   },
   content: { padding: Spacing.lg, paddingBottom: Spacing.xl },
@@ -205,9 +212,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes.base,
     color: Colors.textPrimary,
+  },
+  sectionTitleStandalone: {
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.base,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
   },
   card: {
     padding: Spacing.md,
@@ -217,45 +230,45 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   cardTitle: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes.base,
     color: Colors.textPrimary,
     marginBottom: 2,
   },
   cardSubtitle: {
-    fontFamily: Fonts.bodyRegular,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
     marginBottom: 2,
   },
   cardMeta: {
-    fontFamily: Fonts.bodyRegular,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.xs,
     color: Colors.textTertiary,
   },
   pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   pill: {
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: 10,
     borderRadius: Radius.full,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   pillActive: { borderColor: Colors.accent, backgroundColor: Colors.accent },
   pillText: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
     color: Colors.textPrimary,
   },
   pillTextActive: { color: Colors.white },
   notesInput: {
-    minHeight: 80,
+    minHeight: 88,
     padding: Spacing.md,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
-    fontFamily: Fonts.bodyRegular,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     color: Colors.textPrimary,
     textAlignVertical: 'top',
@@ -273,14 +286,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
   },
   summaryItemName: {
-    fontFamily: Fonts.bodyRegular,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     color: Colors.textPrimary,
     flex: 1,
   },
   summaryItemSize: { color: Colors.textTertiary },
   summaryItemPrice: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
     color: Colors.textPrimary,
   },
@@ -291,14 +304,15 @@ const styles = StyleSheet.create({
   },
   summaryTotalRow: { flexDirection: 'row', justifyContent: 'space-between' },
   summaryTotalLabel: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes.base,
     color: Colors.textPrimary,
   },
   summaryTotalValue: {
-    fontFamily: Fonts.displayMedium,
+    fontFamily: Fonts.bold,
     fontSize: FontSizes.lg,
-    color: Colors.accent,
+    color: Colors.textPrimary,
+    letterSpacing: -0.2,
   },
   bottomBar: {
     padding: Spacing.lg,
@@ -308,13 +322,13 @@ const styles = StyleSheet.create({
   },
   placeOrderButton: {
     backgroundColor: Colors.accent,
-    paddingVertical: Spacing.md + 2,
+    paddingVertical: 16,
     borderRadius: Radius.full,
     alignItems: 'center',
   },
   placeOrderText: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: FontSizes.sm,
+    fontFamily: Fonts.semiBold,
+    fontSize: 12,
     letterSpacing: 2,
     color: Colors.white,
   },

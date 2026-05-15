@@ -19,6 +19,7 @@ export default function CartScreen() {
   const decreaseQuantity = useCartStore((s) => s.decreaseQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const totalPrice = useCartStore((s) => s.totalPrice);
+  const totalItems = useCartStore((s) => s.totalItems());
 
   const subtotal = totalPrice();
   const tax = 0;
@@ -28,17 +29,18 @@ export default function CartScreen() {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
-          <Text style={styles.title}>Cart</Text>
+          <Text style={styles.title}>Your order</Text>
         </View>
         <View style={styles.emptyState}>
           <ShoppingBag size={48} color={Colors.textTertiary} strokeWidth={1} />
-          <Text style={styles.emptyTitle}>Your cart is empty</Text>
+          <Text style={styles.emptyTitle}>Nothing here yet</Text>
           <Text style={styles.emptySubtitle}>
             Add a coffee from our menu to get started.
           </Text>
           <TouchableOpacity
             style={styles.browseButton}
-            onPress={() => router.push('/')}
+            onPress={() => router.push('/(tabs)/menu')}
+            activeOpacity={0.85}
           >
             <Text style={styles.browseButtonText}>BROWSE MENU</Text>
           </TouchableOpacity>
@@ -86,8 +88,10 @@ export default function CartScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Cart</Text>
+        <Text style={styles.title}>Your order ({totalItems})</Text>
+        <Text style={styles.subtitle}>Order preparation time 6–9 mins</Text>
       </View>
+
       <FlatList
         data={items}
         renderItem={renderItem}
@@ -95,14 +99,11 @@ export default function CartScreen() {
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
+
       <View style={styles.summary}>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Subtotal</Text>
           <Text style={styles.summaryValue}>{subtotal.toFixed(3)} KD</Text>
-        </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Tax</Text>
-          <Text style={styles.summaryValue}>{tax.toFixed(3)} KD</Text>
         </View>
         <View style={[styles.summaryRow, styles.totalRow]}>
           <Text style={styles.totalLabel}>Total</Text>
@@ -111,8 +112,11 @@ export default function CartScreen() {
         <TouchableOpacity
           style={styles.checkoutButton}
           onPress={() => router.push('/checkout')}
+          activeOpacity={0.85}
         >
-          <Text style={styles.checkoutButtonText}>PROCEED TO CHECKOUT</Text>
+          <Text style={styles.checkoutButtonText}>
+            PROCEED TO CHECKOUT
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -123,13 +127,20 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Colors.background },
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.sm,
     paddingBottom: Spacing.lg,
   },
   title: {
-    fontFamily: Fonts.displayRegular,
-    fontSize: FontSizes['4xl'],
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes['3xl'],
     color: Colors.textPrimary,
+    letterSpacing: -0.4,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
   },
   emptyState: {
     flex: 1,
@@ -138,14 +149,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   emptyTitle: {
-    fontFamily: Fonts.displayRegular,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes['2xl'],
     color: Colors.textPrimary,
     marginTop: Spacing.lg,
     marginBottom: Spacing.sm,
   },
   emptySubtitle: {
-    fontFamily: Fonts.bodyLight,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.base,
     color: Colors.textSecondary,
     textAlign: 'center',
@@ -154,12 +165,12 @@ const styles = StyleSheet.create({
   browseButton: {
     backgroundColor: Colors.accent,
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.md,
+    paddingVertical: 14,
     borderRadius: Radius.full,
   },
   browseButtonText: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: FontSizes.xs,
+    fontFamily: Fonts.semiBold,
+    fontSize: 11,
     letterSpacing: 2,
     color: Colors.white,
   },
@@ -167,28 +178,28 @@ const styles = StyleSheet.create({
   separator: { height: 1, backgroundColor: Colors.border, marginVertical: Spacing.md },
   cartItem: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
   itemImage: {
-    width: 80,
-    height: 80,
+    width: 72,
+    height: 72,
     borderRadius: Radius.md,
     backgroundColor: Colors.surface,
   },
-  itemDetails: { flex: 1, paddingTop: Spacing.xs },
+  itemDetails: { flex: 1, paddingTop: 2 },
   itemName: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.semiBold,
     fontSize: FontSizes.base,
     color: Colors.textPrimary,
     marginBottom: 2,
   },
   itemSize: {
-    fontFamily: Fonts.bodyRegular,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
     marginBottom: Spacing.sm,
   },
   itemPrice: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.base,
-    color: Colors.accent,
+    color: Colors.textPrimary,
   },
   itemControls: { alignItems: 'flex-end', gap: Spacing.sm },
   removeButton: { padding: Spacing.xs },
@@ -204,7 +215,7 @@ const styles = StyleSheet.create({
   },
   qtyButton: { padding: Spacing.xs },
   qtyText: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
     color: Colors.textPrimary,
     minWidth: 16,
@@ -222,41 +233,42 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   summaryLabel: {
-    fontFamily: Fonts.bodyRegular,
+    fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
   },
   summaryValue: {
-    fontFamily: Fonts.bodyMedium,
+    fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
     color: Colors.textPrimary,
   },
   totalRow: {
     marginTop: Spacing.sm,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     marginBottom: Spacing.lg,
   },
   totalLabel: {
-    fontFamily: Fonts.bodyMedium,
-    fontSize: FontSizes.base,
+    fontFamily: Fonts.semiBold,
+    fontSize: FontSizes.lg,
     color: Colors.textPrimary,
   },
   totalValue: {
-    fontFamily: Fonts.displayMedium,
-    fontSize: FontSizes.xl,
-    color: Colors.accent,
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes['2xl'],
+    color: Colors.textPrimary,
+    letterSpacing: -0.3,
   },
   checkoutButton: {
     backgroundColor: Colors.accent,
-    paddingVertical: Spacing.md + 2,
+    paddingVertical: 16,
     borderRadius: Radius.full,
     alignItems: 'center',
   },
   checkoutButtonText: {
-    fontFamily: Fonts.bodySemiBold,
-    fontSize: FontSizes.sm,
+    fontFamily: Fonts.semiBold,
+    fontSize: 12,
     letterSpacing: 2,
     color: Colors.white,
   },
