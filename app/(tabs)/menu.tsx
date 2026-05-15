@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import {
@@ -17,10 +17,23 @@ import {
   ProductCategory,
   getProductsByCategory,
 } from '@/data/catalog';
+import { useCartStore } from '@/stores/cartStore';
+import { CartBar } from '@/components/CartBar';
 
 export default function MenuScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [activeCategory, setActiveCategory] = useState<ProductCategory>('drinks');
+
+  const items = useCartStore((s) => s.items);
+  // Map productId → total quantity across all sizes
+  const quantityByProduct = useMemo(() => {
+    const map: Record<string, number> = {};
+    items.forEach((it) => {
+      map[it.id] = (map[it.id] || 0) + it.quantity;
+    });
+    return map;
+  }, [items]);
 
   const sections = useMemo(
     () => getProductsByCategory(activeCategory),
@@ -29,12 +42,12 @@ export default function MenuScreen() {
 
   // Flatten sections into a single list with headers for FlatList
   const data = useMemo(() => {
-    const items: ({ type: 'header'; title: string } | { type: 'item'; product: Product })[] = [];
+    const out: ({ type: 'header'; title: string } | { type: 'item'; product: Product })[] = [];
     sections.forEach((s) => {
-      items.push({ type: 'header', title: s.section });
-      s.products.forEach((p) => items.push({ type: 'item', product: p }));
+      out.push({ type: 'header', title: s.section });
+      s.products.forEach((p) => out.push({ type: 'item', product: p }));
     });
-    return items;
+    return out;
   }, [sections]);
 
   return (
@@ -77,18 +90,24 @@ export default function MenuScreen() {
         }
         renderItem={({ item }) => {
           if (item.type === 'header') {
-            return (
-              <Text style={styles.sectionHeader}>{item.title}</Text>
-            );
+            return <Text style={styles.sectionHeader}>{item.title}</Text>;
           }
           const p = item.product;
+          const qty = quantityByProduct[p.id] || 0;
           return (
             <TouchableOpacity
               style={styles.row}
               onPress={() => router.push(`/product/${p.id}`)}
               activeOpacity={0.7}
             >
-              <Image source={{ uri: p.image }} style={styles.rowImage} />
+              <View style={styles.imageWrap}>
+                <Image source={{ uri: p.image }} style={styles.rowImage} />
+                {qty > 0 && (
+                  <View style={styles.qtyBadge}>
+                    <Text style={styles.qtyBadgeText}>{qty}</Text>
+                  </View>
+                )}
+              </View>
               <View style={styles.rowContent}>
                 <Text style={styles.rowName}>{p.name}</Text>
                 {p.description ? (
@@ -101,9 +120,14 @@ export default function MenuScreen() {
             </TouchableOpacity>
           );
         }}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[
+          styles.list,
+          { paddingBottom: Spacing['3xl'] + 60 }, // room for floating cart bar
+        ]}
         ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
       />
+
+      <CartBar bottomInset={0} />
     </SafeAreaView>
   );
 }
@@ -155,9 +179,7 @@ const styles = StyleSheet.create({
   },
 
   // List
-  list: {
-    paddingBottom: Spacing['2xl'],
-  },
+  list: {},
   sectionHeader: {
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.lg,
@@ -178,11 +200,34 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     gap: Spacing.md,
   },
+  imageWrap: {
+    position: 'relative',
+  },
   rowImage: {
     width: 56,
     height: 56,
     borderRadius: Radius.sm,
     backgroundColor: Colors.surface,
+  },
+  qtyBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.background,
+  },
+  qtyBadgeText: {
+    fontFamily: Fonts.bold,
+    fontSize: 11,
+    color: Colors.white,
+    lineHeight: 13,
   },
   rowContent: { flex: 1 },
   rowName: {

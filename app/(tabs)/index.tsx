@@ -10,6 +10,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronDown, Search, Bell } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
+import { useRewardsStore, STAMPS_PER_FREE_DRINK } from '@/stores/rewardsStore';
+import { CartBar } from '@/components/CartBar';
 
 const FEATURED = [
   {
@@ -39,6 +41,8 @@ const FEATURED = [
 ];
 
 export default function HomeScreen() {
+  const stamps = useRewardsStore((s) => s.stamps);
+  const freeDrinks = useRewardsStore((s) => s.freeDrinks);
   const router = useRouter();
 
   return (
@@ -69,13 +73,13 @@ export default function HomeScreen() {
         >
           <View style={styles.rewardsLeft}>
             <Text style={styles.rewardsLabel}>YOUR REWARDS</Text>
-            <Text style={styles.rewardsValue}>3 of 5 stamps</Text>
+            <Text style={styles.rewardsValue}>{freeDrinks > 0 ? `${freeDrinks} free drink${freeDrinks !== 1 ? 's' : ''} ready` : `${stamps} of ${STAMPS_PER_FREE_DRINK} stamps`}</Text>
           </View>
           <View style={styles.stampsRow}>
-            {[1, 2, 3, 4, 5].map((i) => (
+            {Array.from({ length: STAMPS_PER_FREE_DRINK }).map((_, i) => (
               <View
                 key={i}
-                style={[styles.stamp, i <= 3 && styles.stampFilled]}
+                style={[styles.stamp, i < stamps && styles.stampFilled]}
               />
             ))}
           </View>
@@ -134,6 +138,7 @@ export default function HomeScreen() {
           ))}
         </ScrollView>
       </ScrollView>
+      <CartBar bottomInset={0} />
     </SafeAreaView>
   );
 }

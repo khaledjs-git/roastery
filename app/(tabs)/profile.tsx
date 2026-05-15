@@ -15,13 +15,14 @@ import {
   Settings,
 } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
+import { useRewardsStore, STAMPS_PER_FREE_DRINK } from '@/stores/rewardsStore';
 
 const USER = {
   name: 'Khaled Alshaya',
   status: 'No Status',
   balance: 0.0,
-  stamps: 3,
-  stampsNeeded: 5,
+  stamps: 0,
+  STAMPS_PER_FREE_DRINK: 5,
   freeDrinks: 0,
 };
 
@@ -47,6 +48,8 @@ const RECENT_ORDERS = [
 ];
 
 export default function ProfileScreen() {
+  const stamps = useRewardsStore((s) => s.stamps);
+  const freeDrinks = useRewardsStore((s) => s.freeDrinks);
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView
@@ -86,23 +89,23 @@ export default function ProfileScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rewardsTitle}>
-                {USER.stamps} of {USER.stampsNeeded} stamps
+                {stamps} of {STAMPS_PER_FREE_DRINK} stamps
               </Text>
               <Text style={styles.rewardsSubtitle}>
-                {USER.stampsNeeded - USER.stamps} more for a free drink
+                {STAMPS_PER_FREE_DRINK - stamps} more for a free drink
               </Text>
             </View>
           </View>
           <View style={styles.stampsTrack}>
-            {Array.from({ length: USER.stampsNeeded }).map((_, i) => (
+            {Array.from({ length: STAMPS_PER_FREE_DRINK }).map((_, i) => (
               <View
                 key={i}
                 style={[
                   styles.stampCircle,
-                  i < USER.stamps && styles.stampFilled,
+                  i < stamps && styles.stampFilled,
                 ]}
               >
-                {i < USER.stamps && (
+                {i < stamps && (
                   <Text style={styles.stampCheck}>✓</Text>
                 )}
               </View>
@@ -113,10 +116,10 @@ export default function ProfileScreen() {
         <View style={styles.freeDrinksCard}>
           <View>
             <Text style={styles.freeDrinksLabel}>FREE DRINKS</Text>
-            <Text style={styles.freeDrinksValue}>{USER.freeDrinks}</Text>
+            <Text style={styles.freeDrinksValue}>{freeDrinks}</Text>
           </View>
           <Text style={styles.freeDrinksHint}>
-            {USER.freeDrinks > 0
+            {freeDrinks > 0
               ? 'Redeem at checkout'
               : 'Complete a stamp card to earn one'}
           </Text>

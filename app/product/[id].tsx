@@ -22,6 +22,7 @@ export default function ProductDetail() {
 
   const [selectedSize, setSelectedSize] = useState('Medium');
   const [quantity, setQuantity] = useState(1);
+  const [busy, setBusy] = useState(false);
 
   const product = getProduct(id);
 
@@ -41,6 +42,8 @@ export default function ProductDetail() {
   const totalPrice = unitPrice * quantity;
 
   const handleAdd = () => {
+    if (busy) return;
+    setBusy(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     for (let i = 0; i < quantity; i++) {
       addItem({
@@ -51,6 +54,14 @@ export default function ProductDetail() {
         image: product.image,
       });
     }
+    // Auto-navigate back. The persistent cart bar IS the confirmation.
+    setTimeout(() => {
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)');
+      }
+    }, 300);
   };
 
   return (
@@ -61,7 +72,7 @@ export default function ProductDetail() {
         </TouchableOpacity>
 
         <View style={styles.imageWrap}>
-          <Image source={{ uri: product.image }} style={styles.image} />
+          <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
         </View>
 
         <View style={styles.content}>
@@ -117,6 +128,7 @@ export default function ProductDetail() {
           style={styles.addButton}
           onPress={handleAdd}
           activeOpacity={0.85}
+          disabled={busy}
         >
           <Text style={styles.addButtonText}>
             Add to cart · {totalPrice.toFixed(3)} KD
@@ -151,7 +163,7 @@ const styles = StyleSheet.create({
   imageWrap: {
     width: '100%',
     height: 420,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },

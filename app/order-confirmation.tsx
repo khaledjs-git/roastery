@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Check } from 'lucide-react-native';
+import { Check, Gift } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useCartStore } from '@/stores/cartStore';
+import { useRewardsStore, STAMPS_PER_FREE_DRINK } from '@/stores/rewardsStore';
+import { getProduct } from '@/data/catalog';
 
 export default function OrderConfirmationScreen() {
   const router = useRouter();
@@ -12,11 +14,38 @@ export default function OrderConfirmationScreen() {
     orderNumber: string;
     pickupTime: string;
   }>();
+  const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
+  const addStampsFromOrder = useRewardsStore((s) => s.addStampsFromOrder);
+  const stampsAfter = useRewardsStore((s) => s.stamps);
+  const freeDrinksAfter = useRewardsStore((s) => s.freeDrinks);
+
+  // Snapshot what we earned on this order (computed once on mount, before clearing cart)
+  const earnedInfo = useRef<{ drinksCount: number; earnedFree: boolean } | null>(null);
 
   useEffect(() => {
+    if (earnedInfo.current !== null) return; // only run once
+    // Count drink items in the order
+    const drinksCount = items.reduce((sum, item) => {
+      const p = getProduct(item.id);
+      return p?.category === 'drinks' ? sum + item.quantity : sum;
+    }, 0);
+
+    // Compute whether this order will push the user across a free-drink threshold
+    const prevStamps = stampsAfter; // before adding
+    const willEarn = Math.floor((prevStamps + drinksCount) / STAMPS_PER_FREE_DRINK) >
+      Math.floor(prevStamps / STAMPS_PER_FREE_DRINK);
+
+    earnedInfo.current = { drinksCount, earnedFree: willEarn };
+
+    if (drinksCount > 0) {
+      addStampsFromOrder(drinksCount);
+    }
     clearCart();
-  }, [clearCart]);
+  }, [items, addStampsFromOrder, clearCart, stampsAfter]);
+
+  const drinksCount = earnedInfo.current?.drinksCount ?? 0;
+  const earnedFree = earnedInfo.current?.earnedFree ?? false;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -47,6 +76,29 @@ export default function OrderConfirmationScreen() {
           </View>
         </View>
 
+        {drinksCount > 0 && (
+          <View style={styles.rewardsCard}>
+            <View style={styles.rewardsHeader}>
+              <Gift size={18} color={Colors.accent} strokeWidth={1.5} />
+              <Text style={styles.rewardsLabel}>REWARDS UPDATE</Text>
+            </View>
+            {earnedFree ? (
+              <Text style={styles.rewardsBig}>
+                You earned a free drink ✨
+              </Text>
+            ) : (
+              <Text style={styles.rewardsBig}>
+                +{drinksCount} stamp{drinksCount !== 1 ? 's' : ''}
+              </Text>
+            )}
+            <Text style={styles.rewardsHint}>
+              {freeDrinksAfter > 0
+                ? `${freeDrinksAfter} free drink${freeDrinksAfter !== 1 ? 's' : ''} ready · ${stampsAfter} of ${STAMPS_PER_FREE_DRINK} stamps`
+                : `${stampsAfter} of ${STAMPS_PER_FREE_DRINK} stamps · ${STAMPS_PER_FREE_DRINK - stampsAfter} more to a free drink`}
+            </Text>
+          </View>
+        )}
+
         <Text style={styles.note}>
           You'll receive a notification when your order is ready for pickup.
         </Text>
@@ -70,7 +122,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing['3xl'],
+    paddingTop: Spacing['2xl'],
     alignItems: 'center',
   },
   iconCircle: {
@@ -80,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   title: {
     fontFamily: Fonts.bold,
@@ -94,7 +146,7 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.base,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing.xl,
     lineHeight: 22,
   },
   detailsCard: {
@@ -105,7 +157,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   detailRow: {
     flexDirection: 'row',
@@ -124,6 +176,39 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   divider: { height: 1, backgroundColor: Colors.border },
+  rewardsCard: {
+    width: '100%',
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    backgroundColor: Colors.surface,
+    marginBottom: Spacing.md,
+  },
+  rewardsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: 6,
+  },
+  rewardsLabel: {
+    fontFamily: Fonts.medium,
+    fontSize: 11,
+    letterSpacing: 2,
+    color: Colors.accent,
+  },
+  rewardsBig: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.lg,
+    color: Colors.textPrimary,
+    marginBottom: 4,
+    letterSpacing: -0.2,
+  },
+  rewardsHint: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+  },
   note: {
     fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
@@ -131,6 +216,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: Spacing.md,
+    marginTop: Spacing.md,
   },
   bottomBar: {
     padding: Spacing.lg,
