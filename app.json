@@ -44,6 +44,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "493fa902-454a-4bc3-9b9b-f916850424f2"
+      }
+    },
+    "owner": "qventures",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/493fa902-454a-4bc3-9b9b-f916850424f2"
     }
   }
 }
