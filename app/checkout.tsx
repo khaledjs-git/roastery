@@ -32,7 +32,7 @@ export default function CheckoutScreen() {
     const orderNumber = `R${Math.floor(100000 + Math.random() * 900000)}`;
     router.replace({
       pathname: '/order-confirmation',
-      params: { orderNumber, pickupTime: selectedTime },
+      params: { orderNumber, pickupTime: selectedTime, pickupLocation: 'Salmiya' },
     });
   };
 

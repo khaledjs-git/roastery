@@ -24,6 +24,7 @@ export type Product = {
   hasSizes: boolean;
   isMilkBased?: boolean; // only set for drinks; if true, shows milk options
   isApparel?: boolean; // only set for merch; if true, shows S/M/L/XL sizes
+  beanPrices?: { '250g': number; '500g': number; '1kg': number }; // only set for beans
 };
 
 // Cup sizes for drinks
@@ -57,6 +58,11 @@ export const FLAVOR_PRICE = 0.3;
 export type ApparelSize = 'S' | 'M' | 'L' | 'XL';
 
 export const APPAREL_SIZES: ApparelSize[] = ['S', 'M', 'L', 'XL'];
+
+// Bag sizes for whole-bean coffee. Per-product pricing (set in catalog).
+export type BeanSize = '250g' | '500g' | '1kg';
+
+export const BEAN_SIZES: BeanSize[] = ['250g', '500g', '1kg'];
 
 export const CATEGORIES: { id: ProductCategory; label: string }[] = [
   { id: 'drinks', label: 'Drinks' },
@@ -117,7 +123,7 @@ export const CATALOG: Product[] = [
     description:
       'A concentrated shot pulled to order from our house blend. Rich crema, clean finish.',
     basePrice: 1.0,
-    image: 'https://images.unsplash.com/photo-1542318850-95184e9c6c9b?w=900&q=80',
+    image: 'https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=900&q=80',
     category: 'drinks',
     section: 'Espresso Based',
     hasSizes: true,
@@ -169,7 +175,7 @@ export const CATALOG: Product[] = [
     description:
       'Two espresso shots poured over chilled water and ice. Crisp and refreshing.',
     basePrice: 1.25,
-    image: 'https://images.unsplash.com/photo-1530373239216-42518e6b3b8b?w=900&q=80',
+    image: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=900&q=80',
     category: 'drinks',
     section: 'Cold',
     hasSizes: true,
@@ -211,23 +217,12 @@ export const CATALOG: Product[] = [
     hasSizes: false,
   },
   {
-    id: '23',
-    name: 'Protein Bento',
-    description:
-      'A balanced box of grilled chicken, quinoa, roasted veg, and a tahini dressing. Made fresh.',
-    basePrice: 4.5,
-    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=900&q=80',
-    category: 'food',
-    section: 'Bowls & Toasts',
-    hasSizes: false,
-  },
-  {
     id: '24',
     name: 'Avocado Toast',
     description:
       'Sourdough, smashed avocado, lemon, chili flakes, and Kuwaiti olive oil.',
     basePrice: 3.5,
-    image: 'https://images.unsplash.com/photo-1603046891744-1f76eb10aec3?w=900&q=80',
+    image: 'https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?w=900&q=80',
     category: 'food',
     section: 'Bowls & Toasts',
     hasSizes: false,
@@ -236,7 +231,7 @@ export const CATALOG: Product[] = [
   // BEANS
   {
     id: '30',
-    name: 'Ethiopia Yirgacheffe — 250g',
+    name: 'Ethiopia Yirgacheffe',
     description:
       'A bright, floral single-origin with notes of jasmine, bergamot, and lemon zest. Light roast.',
     basePrice: 6.5,
@@ -244,10 +239,11 @@ export const CATALOG: Product[] = [
     category: 'beans',
     section: 'Single Origin',
     hasSizes: false,
+    beanPrices: { '250g': 6.5, '500g': 12, '1kg': 22 },
   },
   {
     id: '31',
-    name: 'Colombia La Esperanza — 250g',
+    name: 'Colombia La Esperanza',
     description:
       'A rich, balanced cup with notes of milk chocolate, brown sugar, and red apple. Medium roast.',
     basePrice: 5.5,
@@ -255,10 +251,11 @@ export const CATALOG: Product[] = [
     category: 'beans',
     section: 'Single Origin',
     hasSizes: false,
+    beanPrices: { '250g': 5.5, '500g': 10, '1kg': 18.5 },
   },
   {
     id: '32',
-    name: 'House Blend — 250g',
+    name: 'House Blend',
     description:
       'Our signature blend: balanced, full-bodied, and forgiving across brew methods. Notes of cocoa, hazelnut, and dried fruit.',
     basePrice: 4.5,
@@ -266,6 +263,7 @@ export const CATALOG: Product[] = [
     category: 'beans',
     section: 'Blends',
     hasSizes: false,
+    beanPrices: { '250g': 4.5, '500g': 8, '1kg': 15 },
   },
 
   // MERCH

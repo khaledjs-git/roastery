@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react-native';
+import { Minus, Plus, ShoppingBag, Trash2, X } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useCartStore, CartItem } from '@/stores/cartStore';
 import { resolveImage } from '@/data/catalog';
@@ -47,7 +47,16 @@ export default function CartScreen() {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.header}>
-          <Text style={styles.title}>Your order</Text>
+          <View style={styles.headerRow}>
+            <Text style={[styles.title, { flex: 1 }]}>Your order</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => router.push('/(tabs)')}
+              activeOpacity={0.7}
+            >
+              <X size={20} color={Colors.textPrimary} strokeWidth={1.5} />
+            </TouchableOpacity>
+          </View>
         </View>
         <View style={styles.emptyState}>
           <ShoppingBag size={48} color={Colors.textTertiary} strokeWidth={1} />
@@ -113,8 +122,19 @@ export default function CartScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Your order ({totalItems})</Text>
-        <Text style={styles.subtitle}>Order preparation time 6–9 mins</Text>
+        <View style={styles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.title}>Your order ({totalItems})</Text>
+            <Text style={styles.subtitle}>Order preparation time 6–9 mins</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => router.push('/(tabs)')}
+            activeOpacity={0.7}
+          >
+            <X size={20} color={Colors.textPrimary} strokeWidth={1.5} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FlatList
@@ -164,6 +184,19 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
   },
   emptyState: {
     flex: 1,

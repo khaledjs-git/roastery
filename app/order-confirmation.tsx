@@ -6,16 +6,22 @@ import { Check, Gift } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useCartStore } from '@/stores/cartStore';
 import { useRewardsStore, STAMPS_PER_FREE_DRINK } from '@/stores/rewardsStore';
+import { useOrdersStore } from '@/stores/ordersStore';
+import { useNotificationsStore } from '@/stores/notificationsStore';
 import { getProduct } from '@/data/catalog';
 
 export default function OrderConfirmationScreen() {
   const router = useRouter();
-  const { orderNumber, pickupTime } = useLocalSearchParams<{
+  const { orderNumber, pickupTime, pickupLocation } = useLocalSearchParams<{
     orderNumber: string;
     pickupTime: string;
+    pickupLocation: string;
   }>();
   const items = useCartStore((s) => s.items);
+  const totalPrice = useCartStore((s) => s.totalPrice);
   const clearCart = useCartStore((s) => s.clearCart);
+  const addOrder = useOrdersStore((s) => s.addOrder);
+  const addNotification = useNotificationsStore((s) => s.addNotification);
   const addStampsFromOrder = useRewardsStore((s) => s.addStampsFromOrder);
   const stampsAfter = useRewardsStore((s) => s.stamps);
   const freeDrinksAfter = useRewardsStore((s) => s.freeDrinks);
@@ -37,6 +43,23 @@ export default function OrderConfirmationScreen() {
       Math.floor(prevStamps / STAMPS_PER_FREE_DRINK);
 
     earnedInfo.current = { drinksCount, earnedFree: willEarn };
+
+    // Persist the finalized order BEFORE clearing the cart
+    const subtotal = totalPrice();
+    const savedOrder = addOrder({
+      orderNumber: orderNumber || 'FLT-0000',
+      items: [...items],
+      subtotal,
+      total: subtotal,
+      pickupLocation: pickupLocation || 'Salmiya',
+      pickupTime: pickupTime || 'ASAP',
+    });
+
+    addNotification({
+      title: 'Order received',
+      body: `Your order ${savedOrder.orderNumber} is being prepared at ${savedOrder.pickupLocation}.`,
+      orderId: savedOrder.id,
+    });
 
     if (drinksCount > 0) {
       addStampsFromOrder(drinksCount);

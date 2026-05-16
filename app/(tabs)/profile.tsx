@@ -6,6 +6,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import {
   ChevronRight,
   Gift,
@@ -16,6 +17,8 @@ import {
 } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useRewardsStore, STAMPS_PER_FREE_DRINK } from '@/stores/rewardsStore';
+import { useOrdersStore, relativeTime, orderSummary, reorderInto } from '@/stores/ordersStore';
+import { useCartStore } from '@/stores/cartStore';
 
 const USER = {
   name: 'Khaled Alshaya',
@@ -26,28 +29,10 @@ const USER = {
   freeDrinks: 0,
 };
 
-const RECENT_ORDERS = [
-  {
-    id: 'R428193',
-    items: '1× Iced Latte (Medium), 1× Almond Crunch',
-    total: 2.75,
-    date: 'Yesterday · 4:32 PM',
-  },
-  {
-    id: 'R372845',
-    items: '2× Flat White (Medium)',
-    total: 3.0,
-    date: 'May 13 · 9:14 AM',
-  },
-  {
-    id: 'R201764',
-    items: '1× V60 Pour Over, 1× Pain au Chocolat',
-    total: 3.25,
-    date: 'May 11 · 11:48 AM',
-  },
-];
-
 export default function ProfileScreen() {
+  const orders = useOrdersStore((s) => s.orders);
+  const addItem = useCartStore((s) => s.addItem);
+  const router = useRouter();
   const stamps = useRewardsStore((s) => s.stamps);
   const freeDrinks = useRewardsStore((s) => s.freeDrinks);
   return (
@@ -128,25 +113,36 @@ export default function ProfileScreen() {
         {/* RECENT ORDERS */}
         <Text style={styles.sectionTitle}>Recent orders</Text>
 
-        {RECENT_ORDERS.map((order) => (
-          <TouchableOpacity
-            key={order.id}
-            style={styles.orderRow}
-            activeOpacity={0.7}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={styles.orderNumber}>Order #{order.id}</Text>
-              <Text style={styles.orderItems} numberOfLines={1}>
-                {order.items}
-              </Text>
-              <Text style={styles.orderDate}>{order.date}</Text>
-            </View>
-            <View style={styles.orderRight}>
-              <Text style={styles.orderTotal}>{order.total.toFixed(3)} KD</Text>
-              <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={1.5} />
-            </View>
-          </TouchableOpacity>
-        ))}
+        {orders.length === 0 ? (
+          <View style={styles.emptyOrders}>
+            <Text style={styles.emptyOrdersText}>No orders yet.</Text>
+            <Text style={styles.emptyOrdersSub}>Place your first order to see it here.</Text>
+          </View>
+        ) : (
+          orders.slice(0, 5).map((order) => (
+            <TouchableOpacity
+              key={order.id}
+              style={styles.orderRow}
+              activeOpacity={0.7}
+              onPress={() => {
+                reorderInto(order, addItem);
+                router.push('/(tabs)/cart');
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.orderNumber}>Order {order.orderNumber}</Text>
+                <Text style={styles.orderItems} numberOfLines={1}>
+                  {orderSummary(order)}
+                </Text>
+                <Text style={styles.orderDate}>{relativeTime(order.createdAt)}</Text>
+              </View>
+              <View style={styles.orderRight}>
+                <Text style={styles.orderTotal}>{order.total.toFixed(3)} KD</Text>
+                <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={1.5} />
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
 
         {/* SETTINGS */}
         <Text style={styles.sectionTitle}>Account</Text>
@@ -386,6 +382,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
+  },
+  emptyOrders: {
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+  },
+  emptyOrdersText: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.base,
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  emptyOrdersSub: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.sm,
+    color: Colors.textTertiary,
   },
   orderTotal: {
     fontFamily: Fonts.medium,

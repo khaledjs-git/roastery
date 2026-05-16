@@ -22,6 +22,8 @@ import {
   MILK_OPTIONS,
   FLAVOR_OPTIONS,
   APPAREL_SIZES,
+  BEAN_SIZES,
+  type BeanSize,
   EXTRA_SHOT_PRICE,
   MAX_EXTRA_SHOTS,
   FLAVOR_PRICE,
@@ -49,6 +51,7 @@ export default function ProductDetail() {
 
   // Apparel size state
   const [apparelSize, setApparelSize] = useState('M');
+  const [beanSize, setBeanSize] = useState<BeanSize>('250g');
 
   if (!product) {
     return (
@@ -60,6 +63,7 @@ export default function ProductDetail() {
 
   const isDrink = product.category === 'drinks';
   const isApparel = product.category === 'merch' && product.isApparel === true;
+  const isBeans = product.category === 'beans' && !!product.beanPrices;
 
   const sizeData = product.hasSizes
     ? SIZES.find((s) => s.label === selectedSize)!
@@ -68,8 +72,10 @@ export default function ProductDetail() {
   // Price = base + size + extra shots + flavors
   const shotsCost = isDrink ? extraShots * EXTRA_SHOT_PRICE : 0;
   const flavorsCost = isDrink ? flavors.length * FLAVOR_PRICE : 0;
-  const unitPrice =
-    product.basePrice + sizeData.priceModifier + shotsCost + flavorsCost;
+  const beanPrice = isBeans ? product.beanPrices![beanSize] : 0;
+  const unitPrice = isBeans
+    ? beanPrice
+    : product.basePrice + sizeData.priceModifier + shotsCost + flavorsCost;
   const totalPrice = unitPrice * quantity;
 
   const toggleFlavor = (f: Flavor) => {
@@ -88,7 +94,7 @@ export default function ProductDetail() {
       id: product.id,
       name: product.name,
       price: unitPrice,
-      size: sizeData.label,
+      size: isBeans ? beanSize : sizeData.label,
       image: product.image,
       ...(isDrink && {
         strengthBase,
@@ -151,8 +157,12 @@ export default function ProductDetail() {
                     >
                       <Text style={[styles.pillText, active && styles.pillTextActive]}>
                         {s.label}
-                        {s.priceModifier > 0 ? `  +${s.priceModifier.toFixed(3)}` : ''}
                       </Text>
+                      {s.priceModifier > 0 && (
+                        <Text style={[styles.pillSubText, active && styles.pillSubTextActive]}>
+                          +{s.priceModifier.toFixed(3)}
+                        </Text>
+                      )}
                     </TouchableOpacity>
                   );
                 })}
@@ -324,6 +334,37 @@ export default function ProductDetail() {
             </>
           )}
 
+          {/* BAG SIZE (beans) */}
+          {isBeans && (
+            <>
+              <Text style={styles.sectionLabel}>BAG SIZE</Text>
+              <View style={styles.pillRow}>
+                {BEAN_SIZES.map((s) => {
+                  const active = beanSize === s;
+                  const price = product.beanPrices![s];
+                  return (
+                    <TouchableOpacity
+                      key={s}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setBeanSize(s);
+                      }}
+                      style={[styles.pill, active && styles.pillActive]}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                        {s}
+                      </Text>
+                      <Text style={[styles.pillSubText, active && styles.pillSubTextActive]}>
+                        {price.toFixed(3)} KD
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
           {/* QUANTITY */}
           <Text style={styles.sectionLabel}>QUANTITY</Text>
           <View style={styles.quantityRow}>
@@ -423,11 +464,20 @@ const styles = StyleSheet.create({
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 10,
     borderRadius: Radius.full,
     borderWidth: 1,
     borderColor: Colors.border,
+    gap: 6,
+  },
+  pillSubText: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.xs,
+    color: Colors.textTertiary,
+  },
+  pillSubTextActive: {
+    color: 'rgba(255,255,255,0.7)',
   },
   pillActive: {
     borderColor: Colors.accent,
