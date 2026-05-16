@@ -12,6 +12,7 @@ type AuthState = {
   user: AuthUser | null;
   isSignedIn: () => boolean;
   signIn: (data: { phone: string; name?: string }) => void;
+  setName: (name: string) => void;
   signOut: () => void;
 };
 
@@ -32,6 +33,12 @@ export const useAuthStore = create<AuthState>()(
             signedInAt: Date.now(),
           },
         });
+      },
+
+      setName: (name) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, name } : null,
+        }));
       },
 
       signOut: () => {

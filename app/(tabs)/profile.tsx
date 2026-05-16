@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Gift, HelpCircle, LogOut, Plus, Settings, LogIn } from 'lucide-react-native';
+import { ChevronRight, Gift, HelpCircle, LogOut, Plus, Settings, LogIn, Coffee } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useRewardsStore, STAMPS_PER_FREE_DRINK } from '@/stores/rewardsStore';
 import { useOrdersStore, relativeTime, orderSummary, reorderInto } from '@/stores/ordersStore';
@@ -49,19 +49,25 @@ export default function ProfileScreen() {
             <Text style={styles.userStatus}>{user.phone}</Text>
           </View>
         ) : (
-          <View style={styles.userBlock}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>👋</Text>
-            </View>
-            <Text style={styles.userName}>Welcome</Text>
-            <Text style={styles.userStatus}>Sign in to save your rewards</Text>
+          <View style={styles.welcomeBlock}>
+            <Text style={styles.welcomeOverline}>WELCOME</Text>
+            <Text style={styles.welcomeHeading}>Hi there—</Text>
+            <Text style={styles.welcomeTagline}>
+              Sign in to save your rewards, track orders, and reorder faster.
+            </Text>
             <TouchableOpacity
               style={styles.signInButton}
               onPress={() => router.push('/auth/phone')}
               activeOpacity={0.85}
             >
-              <LogIn size={14} color={Colors.white} strokeWidth={2} />
               <Text style={styles.signInButtonText}>SIGN IN</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.guestLink}
+              activeOpacity={0.7}
+              onPress={() => {}}
+            >
+              <Text style={styles.guestLinkText}>Continue browsing as a guest</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -96,19 +102,24 @@ export default function ProfileScreen() {
             </View>
           </View>
           <View style={styles.stampsTrack}>
-            {Array.from({ length: STAMPS_PER_FREE_DRINK }).map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.stampCircle,
-                  i < stamps && styles.stampFilled,
-                ]}
-              >
-                {i < stamps && (
-                  <Text style={styles.stampCheck}>✓</Text>
-                )}
-              </View>
-            ))}
+            {Array.from({ length: STAMPS_PER_FREE_DRINK }).map((_, i) => {
+              const earned = i < stamps;
+              return (
+                <View
+                  key={i}
+                  style={[
+                    styles.stampCircle,
+                    earned && styles.stampFilled,
+                  ]}
+                >
+                  <Coffee
+                    size={16}
+                    color={earned ? Colors.white : Colors.textTertiary}
+                    strokeWidth={1.8}
+                  />
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -229,15 +240,52 @@ const styles = StyleSheet.create({
   },
 
   // Balance card
-  signInButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.accent,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: 12,
-    borderRadius: Radius.full,
+  welcomeBlock: {
+    alignItems: 'flex-start',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.lg,
+  },
+  welcomeOverline: {
+    fontFamily: Fonts.medium,
+    fontSize: 11,
+    letterSpacing: 2,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.md,
+  },
+  welcomeHeading: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes['3xl'],
+    color: Colors.textPrimary,
+    letterSpacing: -0.4,
+    marginBottom: Spacing.sm,
+  },
+  welcomeTagline: {
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.base,
+    color: Colors.textSecondary,
+    lineHeight: 22,
+    marginBottom: Spacing.xl,
+    maxWidth: 320,
+  },
+  guestLink: {
     marginTop: Spacing.md,
+    paddingVertical: 8,
+  },
+  guestLinkText: {
+    fontFamily: Fonts.medium,
+    fontSize: FontSizes.sm,
+    color: Colors.textSecondary,
+    textDecorationLine: 'underline',
+  },
+  signInButton: {
+    backgroundColor: Colors.accent,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: 16,
+    borderRadius: Radius.full,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
   },
   signInButtonText: {
     fontFamily: Fonts.semiBold,

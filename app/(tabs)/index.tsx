@@ -16,6 +16,8 @@ import { Modal } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { useOrdersStore, relativeTime, orderSummary, reorderInto } from '@/stores/ordersStore';
 import { useNotificationsStore } from '@/stores/notificationsStore';
+import { useAuthStore } from '@/stores/authStore';
+import { NamePromptModal } from '@/components/NamePromptModal';
 import { useCartStore } from '@/stores/cartStore';
 import { getProduct, resolveImage } from '@/data/catalog';
 import { CartBar } from '@/components/CartBar';
@@ -57,6 +59,12 @@ export default function HomeScreen() {
   const notifications = useNotificationsStore((s) => s.notifications);
   const unreadCount = notifications.filter((n) => !n.read).length;
   const markAllRead = useNotificationsStore((s) => s.markAllRead);
+  const user = useAuthStore((s) => s.user);
+  const setUserName = useAuthStore((s) => s.setName);
+
+  // Show name prompt if signed in but no name set yet
+  // (and they haven't explicitly skipped it before — we track that via a sentinel value)
+  const nameNeedsAsking = !!user && !user.name;
   const router = useRouter();
 
   return (
@@ -253,6 +261,13 @@ export default function HomeScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* NAME PROMPT — shows after first sign-in when user has no name */}
+      <NamePromptModal
+        visible={nameNeedsAsking}
+        onSubmit={(name) => setUserName(name)}
+        onSkip={() => setUserName('Guest')}
+      />
     </SafeAreaView>
   );
 }
