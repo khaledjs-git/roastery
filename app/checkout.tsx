@@ -29,10 +29,11 @@ export default function CheckoutScreen() {
   const total = subtotal;
 
   const handlePlaceOrder = () => {
-    const orderNumber = `R${Math.floor(100000 + Math.random() * 900000)}`;
-    router.replace({
-      pathname: '/order-confirmation',
-      params: { orderNumber, pickupTime: selectedTime, pickupLocation: 'Salmiya' },
+    // Route to payment selection screen.
+    // Payment screen generates the order number after the user picks a method.
+    router.push({
+      pathname: '/payment',
+      params: { pickupTime: selectedTime },
     });
   };
 
@@ -161,7 +162,7 @@ export default function CheckoutScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.placeOrderText}>
-              PLACE ORDER · {total.toFixed(3)} KD
+              CONTINUE TO PAYMENT · {total.toFixed(3)} KD
             </Text>
           </TouchableOpacity>
         </View>

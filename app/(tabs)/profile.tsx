@@ -7,18 +7,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import {
-  ChevronRight,
-  Gift,
-  HelpCircle,
-  LogOut,
-  Plus,
-  Settings,
-} from 'lucide-react-native';
+import { ChevronRight, Gift, HelpCircle, LogOut, Plus, Settings, LogIn } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes, Radius, Spacing } from '@/constants/theme';
 import { useRewardsStore, STAMPS_PER_FREE_DRINK } from '@/stores/rewardsStore';
 import { useOrdersStore, relativeTime, orderSummary, reorderInto } from '@/stores/ordersStore';
 import { useCartStore } from '@/stores/cartStore';
+import { useAuthStore } from '@/stores/authStore';
 
 const USER = {
   name: 'Khaled Alshaya',
@@ -30,6 +24,8 @@ const USER = {
 };
 
 export default function ProfileScreen() {
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
   const orders = useOrdersStore((s) => s.orders);
   const addItem = useCartStore((s) => s.addItem);
   const router = useRouter();
@@ -41,16 +37,34 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* USER HEADER */}
-        <View style={styles.userBlock}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {USER.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-            </Text>
+        {/* USER HEADER — auth-aware */}
+        {user ? (
+          <View style={styles.userBlock}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {(user.name || 'F').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()}
+              </Text>
+            </View>
+            <Text style={styles.userName}>{user.name || 'FLAT Customer'}</Text>
+            <Text style={styles.userStatus}>{user.phone}</Text>
           </View>
-          <Text style={styles.userName}>{USER.name}</Text>
-          <Text style={styles.userStatus}>{USER.status}</Text>
-        </View>
+        ) : (
+          <View style={styles.userBlock}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>👋</Text>
+            </View>
+            <Text style={styles.userName}>Welcome</Text>
+            <Text style={styles.userStatus}>Sign in to save your rewards</Text>
+            <TouchableOpacity
+              style={styles.signInButton}
+              onPress={() => router.push('/auth/phone')}
+              activeOpacity={0.85}
+            >
+              <LogIn size={14} color={Colors.white} strokeWidth={2} />
+              <Text style={styles.signInButtonText}>SIGN IN</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* BALANCE CARD */}
         <View style={styles.balanceCard}>
@@ -159,12 +173,18 @@ export default function ProfileScreen() {
           <ChevronRight size={18} color={Colors.textTertiary} strokeWidth={1.5} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuRow} activeOpacity={0.7}>
-          <LogOut size={18} color={Colors.error} strokeWidth={1.5} />
-          <Text style={[styles.menuText, { color: Colors.error }]}>Sign out</Text>
-        </TouchableOpacity>
+        {user && (
+          <TouchableOpacity
+            style={styles.menuRow}
+            activeOpacity={0.7}
+            onPress={signOut}
+          >
+            <LogOut size={18} color={Colors.error} strokeWidth={1.5} />
+            <Text style={[styles.menuText, { color: Colors.error }]}>Sign out</Text>
+          </TouchableOpacity>
+        )}
 
-        <Text style={styles.versionText}>Roastery · v0.1.0</Text>
+        <Text style={styles.versionText}>FLAT · v0.1.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -209,6 +229,22 @@ const styles = StyleSheet.create({
   },
 
   // Balance card
+  signInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.accent,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: 12,
+    borderRadius: Radius.full,
+    marginTop: Spacing.md,
+  },
+  signInButtonText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 11,
+    letterSpacing: 2,
+    color: Colors.white,
+  },
   balanceCard: {
     flexDirection: 'row',
     alignItems: 'center',
