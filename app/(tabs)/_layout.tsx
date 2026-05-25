@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Tabs } from 'expo-router';
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import { Home, Coffee, User, ShoppingBag, Info } from 'lucide-react-native';
+import { Home, Coffee, User, ShoppingBag, Info, Clock } from 'lucide-react-native';
 import { Colors, Fonts, FontSizes } from '@/constants/theme';
 import { useCartStore } from '@/stores/cartStore';
 
@@ -83,7 +83,12 @@ export default function TabsLayout() {
           title: 'ORDER',
           tabBarIcon: ({ color, size }) => <CartIconWithBadge color={color} size={size} />,
         }}
-      />,
+      />
+      <Tabs.Screen
+        name="hours"
+        options={{
+          title: 'HOURS',
+          tabBarIcon: ({ color, size }) => <Clock color={color} size={size} strokeWidth={1.5} />,
         }}
       />
       <Tabs.Screen
