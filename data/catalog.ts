@@ -65,7 +65,7 @@ export type BeanSize = '250g' | '500g' | '1kg';
 export const BEAN_SIZES: BeanSize[] = ['250g', '500g', '1kg'];
 
 export const CATEGORIES: { id: ProductCategory; label: string }[] = [
-  { id: 'drinks', label: 'Coffee' },
+  { id: 'drinks', label: 'Drinks' },
   { id: 'food', label: 'Food' },
   { id: 'beans', label: 'Beans' },
   { id: 'merch', label: 'Merch' },
